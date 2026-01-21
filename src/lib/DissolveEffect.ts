@@ -24,8 +24,6 @@ export class DissolveEffect {
     private dissolveUniforms: { [key: string]: THREE.IUniform };
     private particleUniforms: { [key: string]: THREE.IUniform };
 
-    private clock = new THREE.Clock();
-
     public isPlaying = false;
     public speed = 0.08;
     public direction: 'forward' | 'backward' = 'forward';
@@ -194,9 +192,9 @@ export class DissolveEffect {
 
                     pos = finalPos;
 
-                    pos.x += sin(uTime * 0.001 * aOffset) * aDist;
-                    pos.y += cos(uTime * 0.001 * aOffset) * aDist;
-                    pos.z += sin(uTime * 0.001 * aOffset) * aDist;
+                    pos.x += sin(uTime * aOffset) * aDist;
+                    pos.y += cos(uTime * aOffset) * aDist;
+                    pos.z += sin(uTime * aOffset) * aDist;
 
                     vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
                     vec4 viewPosition = viewMatrix * modelPosition;
@@ -284,9 +282,7 @@ export class DissolveEffect {
     }
 
 
-    public update(time: number) {
-        const deltaTime = this.clock.getDelta();
-
+    public update(time: number, deltaTime: number) {
         this.particleUniforms.uTime.value = time;
 
         if (!this.isPlaying) return;
