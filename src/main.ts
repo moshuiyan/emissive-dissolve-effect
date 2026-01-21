@@ -211,12 +211,14 @@ let meshBlade = createTweakList('Mesh', geoNames, geometries);
 meshBlade.on('change', (val) => { handleMeshChange(val.value) })
 meshFolder.add(meshBlade);
 meshFolder.addBinding(tweaks, "bloomStrength", { min: 1, max: 20, step: 0.01, label: "Bloom Strength" }).on('change', (obj) => { shaderPass.uniforms.uStrength.value = obj.value; })
-meshFolder.addBinding(tweaks, "rotationY", { min: -(Math.PI * 2), max: (Math.PI * 2), step: 0.01, label: "Rotation Y" }).on('change', (obj) => { mesh.rotation.y = obj.value; });
+meshFolder.addBinding(tweaks, "rotationY", { min: -(Math.PI * 2), max: (Math.PI * 2), step: 0.01, label: "Rotation Y" }).on('change', (obj) => { 
+    mesh.rotation.y = obj.value;
+});
 
 const dissolveFolder = controller.addFolder({ title: "Dissolve Effect", expanded: false, });
 dissolveFolder.addBinding(tweaks, "meshVisible", { label: "Visible" }).on('change', (obj) => { mesh.visible = obj.value; });
 let progressBinding = dissolveFolder.addBinding(tweaks, "dissolveProgress", { min: -20, max: 20, step: 0.0001, label: "Progress" }).on('change', (obj) => { dissolveUniforms.uProgress.value = obj.value; });
-dissolveFolder.addBinding(tweaks, "autoDissolve", { label: "Auto Animate" }).on('change', (obj) => {
+dissolveFolder.addBinding(tweaks, "autoDissolve", { label: "Auto Animate" }).on('change', (obj) => { 
     tweaks.autoDissolve = obj.value
     if(tweaks.autoDissolve) dissolveEffect.play(); else dissolveEffect.pause();
 });
@@ -263,12 +265,13 @@ function floatMeshes(time: number) {
 const clock = new THREE.Clock();
 function animate() {
     orbCtrls.update();
-    let time = clock.getElapsedTime();
+    const elapsedTime = clock.getElapsedTime();
+    const deltaTime = clock.getDelta();
 
-    dissolveEffect.update(time);
-
+    dissolveEffect.update(elapsedTime, deltaTime);
+    
     animateDissolve();
-    floatMeshes(time);
+    floatMeshes(elapsedTime);
 
     if (resizeRendererToDisplaySize()) {
         const canvas = re.domElement;

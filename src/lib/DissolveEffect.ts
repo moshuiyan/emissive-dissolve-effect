@@ -23,9 +23,7 @@ export class DissolveEffect {
 
     private dissolveUniforms: { [key: string]: THREE.IUniform };
     private particleUniforms: { [key: string]: THREE.IUniform };
-
-    private clock = new THREE.Clock();
-
+    
     public isPlaying = false;
     public speed = 0.08;
     public direction: 'forward' | 'backward' = 'forward';
@@ -37,7 +35,7 @@ export class DissolveEffect {
 
         this.dissolveUniforms = this._createDissolveUniforms(options);
         this.particleUniforms = this._createParticleUniforms(options);
-
+        
         this._initDissolveMaterial();
         this._initParticleSystem();
     }
@@ -194,9 +192,9 @@ export class DissolveEffect {
 
                     pos = finalPos;
 
-                    pos.x += sin(uTime * 0.001 * aOffset) * aDist;
-                    pos.y += cos(uTime * 0.001 * aOffset) * aDist;
-                    pos.z += sin(uTime * 0.001 * aOffset) * aDist;
+                    pos.x += sin(uTime * aOffset) * aDist;
+                    pos.y += cos(uTime * aOffset) * aDist;
+                    pos.z += sin(uTime * aOffset) * aDist;
 
                     vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
                     vec4 viewPosition = viewMatrix * modelPosition;
@@ -218,11 +216,11 @@ export class DissolveEffect {
                 void main(){
                     if( vNoise < uProgress ) discard;
                     if( vNoise > uProgress + uEdge) discard;
-
+                    
                     vec2 coord = gl_PointCoord;
-                    coord = coord - 0.5;
-                    coord = coord * mat2(cos(vAngle),sin(vAngle) , -sin(vAngle), cos(vAngle));
-                    coord = coord +  0.5;
+                    coord = coord - 0.5; 
+                    coord = coord * mat2(cos(vAngle),sin(vAngle) , -sin(vAngle), cos(vAngle)); 
+                    coord = coord +  0.5; 
 
                     vec4 texture = texture2D(uTexture,coord);
 
@@ -237,7 +235,7 @@ export class DissolveEffect {
         this.particleMesh = new THREE.Points(geometry, this.particleMaterial);
         this.mesh.add(this.particleMesh);
     }
-
+    
     public getDissolveUniforms(){
         return this.dissolveUniforms
     }
@@ -270,7 +268,7 @@ export class DissolveEffect {
     public setParticlesVisible(isVisible: boolean) {
         this.particleMesh.visible = isVisible;
     }
-
+    
     public setMesh(newMesh: THREE.Mesh){
         this.scene.remove(this.mesh);
 
@@ -278,15 +276,13 @@ export class DissolveEffect {
         this._initDissolveMaterial();
 
         this.particleMesh.geometry = newMesh.geometry;
-
+        
         this.scene.add(this.mesh);
         this._updateParticleAttributes(this.particleMesh.geometry);
     }
 
 
-    public update(time: number) {
-        const deltaTime = this.clock.getDelta();
-
+    public update(time: number, deltaTime: number) {
         this.particleUniforms.uTime.value = time;
 
         if (!this.isPlaying) return;
