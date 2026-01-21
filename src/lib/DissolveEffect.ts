@@ -188,13 +188,14 @@ export class DissolveEffect {
                     float progress = clamp((uProgress - noise) / uEdge, 0.0, 1.0);
                     progress = inOutCubic(progress);
 
+                    float spinFactor = sin(progress * 3.14159);
                     vec3 finalPos = bezier4(aCurrentPos, aControl0, aControl1, aEndPos, progress);
 
                     pos = finalPos;
 
-                    pos.x += sin(uTime * aOffset) * aDist;
-                    pos.y += cos(uTime * aOffset) * aDist;
-                    pos.z += sin(uTime * aOffset) * aDist;
+                    pos.x += sin(uTime * aOffset) * aDist * spinFactor;
+                    pos.y += cos(uTime * aOffset) * aDist * spinFactor;
+                    pos.z += sin(uTime * aOffset) * aDist * spinFactor;
 
                     vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
                     vec4 viewPosition = viewMatrix * modelPosition;
