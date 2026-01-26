@@ -23,6 +23,9 @@ export class DissolveEffect {
 
     private dissolveUniforms: { [key: string]: THREE.IUniform };
     private particleUniforms: { [key: string]: THREE.IUniform };
+
+    private _originalStartPos!: THREE.BufferAttribute;
+    private _originalEndPos!: THREE.BufferAttribute;
     
     public isPlaying = false;
     public speed = 0.08;
@@ -136,6 +139,9 @@ export class DissolveEffect {
             aControl0.setXYZ(i, x + controlVec.x, y + controlVec.y, z + controlVec.z);
             aControl1.setXYZ(i, x + controlVec.x * 1.5, y + controlVec.y * 1.5, z + controlVec.z * 1.5);
         }
+
+        this._originalStartPos = aCurrentPos.clone();
+        this._originalEndPos = aEndPos.clone();
 
         geometry.setAttribute('aCurrentPos', aCurrentPos);
         geometry.setAttribute('aControl0', aControl0);
@@ -268,6 +274,17 @@ export class DissolveEffect {
 
     public setParticlesVisible(isVisible: boolean) {
         this.particleMesh.visible = isVisible;
+    }
+
+    public setReversed(reversed: boolean) {
+        const geometry = this.particleMesh.geometry;
+        if (reversed) {
+            geometry.setAttribute('aCurrentPos', this._originalEndPos);
+            geometry.setAttribute('aEndPos', this._originalStartPos);
+        } else {
+            geometry.setAttribute('aCurrentPos', this._originalStartPos);
+            geometry.setAttribute('aEndPos', this._originalEndPos);
+        }
     }
     
     public setMesh(newMesh: THREE.Mesh){

@@ -170,6 +170,7 @@ const tweaks = {
     meshColor: "#" + (mesh.material as THREE.MeshPhysicalMaterial).color.getHexString(),
     edgeColor: "#" + dissolveUniforms.uEdgeColor.value.getHexString(),
     autoDissolve: false,
+    reversed: false,
     particleVisible: true,
     particleBaseSize: particleUniforms.uBaseSize.value,
     particleColor: "#" + particleUniforms.uColor.value.getHexString(),
@@ -221,6 +222,16 @@ let progressBinding = dissolveFolder.addBinding(tweaks, "dissolveProgress", { mi
 dissolveFolder.addBinding(tweaks, "autoDissolve", { label: "Auto Animate" }).on('change', (obj) => { 
     tweaks.autoDissolve = obj.value
     if(tweaks.autoDissolve) dissolveEffect.play(); else dissolveEffect.pause();
+});
+dissolveFolder.addBinding(tweaks, "reversed", { label: "Reversed" }).on('change', (obj) => {
+    dissolveEffect.setReversed(obj.value);
+    if(obj.value) {
+        dissolveUniforms.uProgress.value = 14;
+        dissolveEffect.direction = 'backward';
+    }else{
+        dissolveUniforms.uProgress.value = -17;
+        dissolveEffect.direction = 'forward';
+    }
 });
 dissolveFolder.addBinding(tweaks, "edgeWidth", { min: 0.1, max: 8, step: 0.001, label: "Edge Width" }).on('change', (obj) => { dissolveUniforms.uEdge.value = obj.value });
 dissolveFolder.addBinding(tweaks, "frequency", { min: 0.001, max: 2, step: 0.001, label: "Frequency" }).on('change', (obj) => { dissolveUniforms.uFreq.value = obj.value });
