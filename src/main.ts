@@ -246,26 +246,13 @@ particleMat.transparent = true;
 particleMat.blending = THREE.AdditiveBlending;
 let particleCount = meshGeo.attributes.position.count;
 let particleMaxOffsetArr: Float32Array; // -- how far a particle can go from its initial position 
-let particleInitPosArr: Float32Array; // store the initial position of the particles -- particle position will reset here if it exceed maxoffset
-let particleCurrPosArr: Float32Array; // use to update he position of the particle 
 let particleVelocityArr: Float32Array; // velocity of each particle
-let particleDistArr: Float32Array;
-let particleRotationArr: Float32Array;
-let particleData = {
-    particleSpeedFactor: 0.02, // for tweaking velocity 
-    velocityFactor: { x: 2.5, y: 2 },
-    waveAmplitude: 0,
-}
 
 
 function initParticleAttributes(meshGeo: THREE.BufferGeometry) {
     particleCount = meshGeo.attributes.position.count;
     particleMaxOffsetArr = new Float32Array(particleCount);
-    particleInitPosArr = new Float32Array(meshGeo.getAttribute('position').array);
-    particleCurrPosArr = new Float32Array(meshGeo.getAttribute('position').array);
     particleVelocityArr = new Float32Array(particleCount * 3);
-    particleDistArr = new Float32Array(particleCount);
-    particleRotationArr = new Float32Array(particleCount);
 
 
     for (let i = 0; i < particleCount; i++) {
@@ -275,103 +262,14 @@ function initParticleAttributes(meshGeo: THREE.BufferGeometry) {
 
         particleMaxOffsetArr[i] = Math.random() * 5.5 + 1.5;
 
-        particleVelocityArr[x] = Math.random() * 0.5 + 0.5;
-        particleVelocityArr[y] = Math.random() * 0.5 + 0.5;
-        particleVelocityArr[z] = Math.random() * 0.1;
-
-        particleDistArr[i] = 0.001;
-        particleRotationArr[i] = Math.random() * Math.PI * 2;
+        particleVelocityArr[x] = (Math.random() - 0.5) * 2.0; // range from -1 to 1
+        particleVelocityArr[y] = Math.random() * 2.0 + 0.2; // mostly upward
+        particleVelocityArr[z] = (Math.random() - 0.5) * 2.0; // range from -1 to 1
 
     }
 
     meshGeo.setAttribute('aOffset', new THREE.BufferAttribute(particleMaxOffsetArr, 1));
-    meshGeo.setAttribute('aCurrentPos', new THREE.BufferAttribute(particleCurrPosArr, 3));
     meshGeo.setAttribute('aVelocity', new THREE.BufferAttribute(particleVelocityArr, 3));
-    meshGeo.setAttribute('aDist', new THREE.BufferAttribute(particleDistArr, 1));
-    meshGeo.setAttribute('aAngle', new THREE.BufferAttribute(particleRotationArr, 1));
-}
-
-
-function calculateWaveOffset(idx: number) {
-
-    const posx = particleCurrPosArr[idx * 3 + 0];
-    const posy = particleCurrPosArr[idx * 3 + 1];
-
-    let xwave1 = Math.sin(posy * 2) * (0.8 + particleData.waveAmplitude);
-    let ywave1 = Math.sin(posx * 2) * (0.6 + particleData.waveAmplitude);
-
-    let xwave2 = Math.sin(posy * 5) * (0.2 + particleData.waveAmplitude);
-    let ywave2 = Math.sin(posx * 1) * (0.9 + particleData.waveAmplitude);
-
-
-    let xwave3 = Math.sin(posy * 8) * (0.8 + particleData.waveAmplitude);
-    let ywave3 = Math.sin(posx * 5) * (0.6 + particleData.waveAmplitude);
-
-
-    let xwave4 = Math.sin(posy * 3) * (0.8 + particleData.waveAmplitude);
-    let ywave4 = Math.sin(posx * 7) * (0.6 + particleData.waveAmplitude);
-
-    let xwave = xwave1 + xwave2 + xwave3 + xwave4;
-    let ywave = ywave1 + ywave2 + ywave3 + ywave4;
-
-    return { xwave, ywave }
-}
-
-
-function updateVelocity(idx: number) {
-
-    let vx = particleVelocityArr[idx * 3 + 0];
-    let vy = particleVelocityArr[idx * 3 + 1];
-    let vz = particleVelocityArr[idx * 3 + 2];
-
-    vx *= particleData.velocityFactor.x;
-    vy *= particleData.velocityFactor.y;
-
-    let { xwave, ywave } = calculateWaveOffset(idx);
-
-    vx += xwave;
-    vy += ywave;
-
-
-    vx *= Math.abs(particleData.particleSpeedFactor);
-    vy *= Math.abs(particleData.particleSpeedFactor);
-    vz *= Math.abs(particleData.particleSpeedFactor);
-
-    return { vx, vy, vz }
-}
-
-
-function updateParticleAttriutes() {
-    for (let i = 0; i < particleCount; i++) {
-        let x = i * 3 + 0;
-        let y = i * 3 + 1;
-        let z = i * 3 + 2;
-
-        let { vx, vy, vz } = updateVelocity(i);
-
-        particleCurrPosArr[x] += vx;
-        particleCurrPosArr[y] += vy;
-        particleCurrPosArr[z] += vz;
-
-        const vec1 = new THREE.Vector3(particleInitPosArr[x], particleInitPosArr[y], particleInitPosArr[z]);
-        const vec2 = new THREE.Vector3(particleCurrPosArr[x], particleCurrPosArr[y], particleCurrPosArr[z]);
-        const dist = vec1.distanceTo(vec2);
-
-        particleDistArr[i] = dist;
-        particleRotationArr[i] += 0.01;
-
-        if (dist > particleMaxOffsetArr[i]) {
-            particleCurrPosArr[x] = particleInitPosArr[x];
-            particleCurrPosArr[y] = particleInitPosArr[y];
-            particleCurrPosArr[z] = particleInitPosArr[z];
-        }
-    }
-
-    meshGeo.setAttribute('aOffset', new THREE.BufferAttribute(particleMaxOffsetArr, 1));
-    meshGeo.setAttribute('aCurrentPos', new THREE.BufferAttribute(particleCurrPosArr, 3));
-    meshGeo.setAttribute('aVelocity', new THREE.BufferAttribute(particleVelocityArr, 3));
-    meshGeo.setAttribute('aDist', new THREE.BufferAttribute(particleDistArr, 1));
-    meshGeo.setAttribute('aAngle', new THREE.BufferAttribute(particleRotationArr, 1));
 }
 
 
@@ -379,6 +277,9 @@ initParticleAttributes(meshGeo);
 
 
 const particlesUniformData = {
+    uTime: {
+        value: 0.0
+    },
     uTexture: {
         value: particleTexture,
     },
@@ -394,6 +295,18 @@ const particlesUniformData = {
     },
     uColor: {
         value: new THREE.Color(0x4d9bff),
+    },
+    uSpeed: {
+        value: 0.02,
+    },
+    uVelocityFactor: {
+        value: new THREE.Vector2(2.5, 2.0)
+    },
+    uTurbulenceStrength: {
+        value: 0.5
+    },
+    uTurbulenceFrequency: {
+        value: 0.5
     }
 }
 
@@ -409,13 +322,17 @@ particleMat.vertexShader = `
     uniform float uAmp;
     uniform float uEdge;
     uniform float uProgress;
+    uniform float uTime;
+    uniform float uSpeed;
+    uniform vec2 uVelocityFactor;
+    uniform float uTurbulenceStrength;
+    uniform float uTurbulenceFrequency;
 
     varying float vNoise;
-    varying float vAngle;
 
-    attribute vec3 aCurrentPos;
-    attribute float aDist;
-    attribute float aAngle;
+    attribute float aOffset;
+    attribute vec3 aVelocity;
+
 
     void main() {
         vec3 pos = position;
@@ -423,10 +340,18 @@ particleMat.vertexShader = `
         float noise = snoise(pos * uFreq) * uAmp;
         vNoise =noise;
 
-        vAngle = aAngle;
-
         if( vNoise > uProgress-2.0 && vNoise < uProgress + uEdge+2.0){
-            pos = aCurrentPos;
+            vec3 velocity = aVelocity * vec3(uVelocityFactor.x, uVelocityFactor.y, 1.0);
+
+            float life = fract((uTime * uSpeed) / (aOffset / 2.0));
+            vec3 directionalOffset = velocity * life * (aOffset / 2.0);
+
+            vec3 noiseInput = position * uTurbulenceFrequency + uTime * 0.2;
+            float noiseX = snoise(vec4(noiseInput, 0.0)) * uTurbulenceStrength;
+            float noiseY = snoise(vec4(noiseInput.zxy, 10.0)) * uTurbulenceStrength;
+            vec3 turbulenceOffset = vec3(noiseX, noiseY, 0.0);
+
+            pos += directionalOffset + turbulenceOffset;
         }
 
         vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
@@ -434,8 +359,9 @@ particleMat.vertexShader = `
         vec4 projectedPosition = projectionMatrix * viewPosition;
         gl_Position = projectedPosition;
 
+        float dist = length(pos - position);
         float size = uBaseSize * uPixelDensity;
-        size = size  / (aDist + 1.0);
+        size = size  / (dist + 1.0);
         gl_PointSize = size / -viewPosition.z;
 }
 `;
@@ -447,18 +373,13 @@ particleMat.fragmentShader = `
     uniform sampler2D uTexture;
 
     varying float vNoise;
-    varying float vAngle;
 
     void main(){
         if( vNoise < uProgress ) discard;
         if( vNoise > uProgress + uEdge) discard;
 
-        vec2 coord = gl_PointCoord;
-        coord = coord - 0.5; // get the coordinate from 0-1 ot -0.5 to 0.5
-        coord = coord * mat2(cos(vAngle),sin(vAngle) , -sin(vAngle), cos(vAngle)); // apply the rotation transformaion
-        coord = coord +  0.5; // reset the coordinate to 0-1  
-
-        vec4 texture = texture2D(uTexture,coord);
+        vec4 texture = texture2D(uTexture, gl_PointCoord);
+        if (texture.a < 0.1) discard;
 
         gl_FragColor = vec4(vec3(uColor.xyz * texture.xyz),1.0);
     }
@@ -504,9 +425,10 @@ let tweaks = {
     particleVisible: true,
     particleBaseSize: particlesUniformData.uBaseSize.value,
     particleColor: "#" + particlesUniformData.uColor.value.getHexString(),
-    particleSpeedFactor: particleData.particleSpeedFactor,
-    velocityFactor: particleData.velocityFactor,
-    waveAmplitude: particleData.waveAmplitude,
+    particleSpeed: particlesUniformData.uSpeed.value,
+    velocityFactor: particlesUniformData.uVelocityFactor.value,
+    turbulenceStrength: particlesUniformData.uTurbulenceStrength.value,
+    turbulenceFrequency: particlesUniformData.uTurbulenceFrequency.value,
 
     bloomStrength: shaderPass.uniforms.uStrength.value,
     rotationY: mesh.rotation.y,
@@ -570,11 +492,12 @@ dissolveFolder.addBinding(tweaks, "edgeColor", { label: "Edge Color" }).on('chan
 
 const particleFolder = controller.addFolder({ title: "Particle", expanded: false });
 particleFolder.addBinding(tweaks, "particleVisible", { label: "Visible" }).on('change', (obj) => { particleMesh.visible = obj.value; });
-particleFolder.addBinding(tweaks, "particleBaseSize", { min: 10.0, max: 100, step: 0.01, label: "Base size" }).on('change', (obj) => { particlesUniformData.uBaseSize.value = obj.value; });
+particleFolder.addBinding(tweaks, "particleBaseSize", { min: 10.0, max: 200, step: 0.01, label: "Base size" }).on('change', (obj) => { particlesUniformData.uBaseSize.value = obj.value; });
 particleFolder.addBinding(tweaks, "particleColor", { label: "Color" }).on('change', (obj) => { particlesUniformData.uColor.value.set(obj.value); });
-particleFolder.addBinding(tweaks, "particleSpeedFactor", { min: 0.001, max: 0.1, step: 0.001, label: "Speed" }).on('change', (obj) => { particleData.particleSpeedFactor = obj.value });
-particleFolder.addBinding(tweaks, "waveAmplitude", { min: 0, max: 5, step: 0.01, label: "Wave Amp" }).on('change', (obj) => { particleData.waveAmplitude = obj.value; });
-particleFolder.addBinding(tweaks, "velocityFactor", { expanded: true, picker: 'inline', label: "Velocity Factor" }).on('change', (obj) => { particleData.velocityFactor = obj.value });
+particleFolder.addBinding(tweaks, "particleSpeed", { min: 0.001, max: 0.1, step: 0.001, label: "Speed" }).on('change', (obj) => { particlesUniformData.uSpeed.value = obj.value });
+particleFolder.addBinding(tweaks, "turbulenceStrength", { min: 0, max: 5, step: 0.01, label: "Turbulence Strength" }).on('change', (obj) => { particlesUniformData.uTurbulenceStrength.value = obj.value; });
+particleFolder.addBinding(tweaks, "turbulenceFrequency", { min: 0, max: 2, step: 0.01, label: "Turbulence Frequency" }).on('change', (obj) => { particlesUniformData.uTurbulenceFrequency.value = obj.value; });
+particleFolder.addBinding(tweaks, "velocityFactor", { expanded: true, picker: 'inline', label: "Velocity Factor" }).on('change', (obj) => { particlesUniformData.uVelocityFactor.value = obj.value });
 
 let dissolving = true;
 let geoIdx = 0;
@@ -614,8 +537,8 @@ function animate() {
     orbCtrls.update();
 
     let time = clock.getElapsedTime();
+    particlesUniformData.uTime.value = time;
 
-    updateParticleAttriutes();
 
     floatMeshes(time);
 
